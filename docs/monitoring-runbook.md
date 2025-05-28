@@ -2,7 +2,65 @@
 
 ## Reddit Sentiment Analysis Pipeline - Monitoring and Operations Runbook
 
-This runbook provides operational procedures for monitoring, troubleshooting, and maintaining the Reddit Sentiment Analysis Pipeline in production.
+This runbook provides operational procedures for monitoring, troubleshooting, and maintaining the Reddit Sentim   # If corrupted, restore from backup
+   python3 /home/yasar/cicd_project/scripts/backup_manager.py restore --latest
+   ```
+
+#### Resource Usage
+
+**Alert**: `HighResourceUsage`
+**Severity**: Warning
+**Response Time**: Within 15 minutes
+
+**Investigation Steps**:
+1. Check system resource usage:
+   ```bash
+   # CPU and memory usage
+   top -p $(pgrep -f reddit-sentiment)
+   
+   # Disk I/O
+   iostat -x 1 5
+   
+   # Disk space
+   df -h /home/cayir/cicd_project
+   
+   # Network usage
+   netstat -i
+   ```
+
+2. Check for resource bottlenecks:
+   ```bash
+   # Check for high I/O wait
+   vmstat 1 5
+   
+   # Check for memory pressure
+   cat /proc/meminfo | grep -E "MemAvailable|MemFree|Cached"
+   ```
+
+**Resolution Steps**:
+1. If high CPU usage:
+   ```bash
+   # Reduce processing intensity
+   sed -i 's/SENTIMENT_BATCH_SIZE=32/SENTIMENT_BATCH_SIZE=16/' /home/cayir/cicd_project/config/production.env
+   sed -i 's/REDDIT_SUBREDDIT_COUNT=10/REDDIT_SUBREDDIT_COUNT=5/' /home/cayir/cicd_project/config/production.env
+   sudo systemctl restart reddit-sentiment-pipeline.service
+   ```
+
+2. If high memory usage:
+   ```bash
+   # Clear caches and restart
+   echo 3 > /proc/sys/vm/drop_caches
+   sudo systemctl restart reddit-sentiment-pipeline.service
+   ```
+
+3. If high disk usage:
+   ```bash
+   # Clean up old data
+   find /home/cayir/cicd_project/data -name "*.csv" -mtime +30 -exec gzip {} \;
+   python3 /home/cayir/cicd_project/scripts/backup_manager.py cleanup
+   ```
+
+#### Reddit API Errorsnalysis Pipeline in production.
 
 ## Table of Contents
 
@@ -154,6 +212,60 @@ This runbook provides operational procedures for monitoring, troubleshooting, an
    # Reduce model cache size
    sed -i 's/SENTIMENT_MAX_LENGTH=512/SENTIMENT_MAX_LENGTH=256/' /home/cayir/cicd_project/config/production.env
    sudo systemctl restart reddit-sentiment-pipeline.service
+   ```
+
+#### High Error Rate
+
+**Alert**: `HighErrorRate`
+**Severity**: Warning
+**Response Time**: Within 10 minutes
+
+**Investigation Steps**:
+1. Check error logs for patterns:
+   ```bash
+   grep -i "error" /home/cayir/cicd_project/logs/reddit_sentiment_errors.log | tail -50
+   tail -100 /home/cayir/cicd_project/logs/reddit_sentiment_pipeline.log | grep -i error
+   ```
+
+2. Check error rate metrics:
+   ```bash
+   curl -s "http://localhost:8000/metrics" | grep error_count
+   ```
+
+3. Identify error sources:
+   ```bash
+   # Check for Reddit API errors
+   grep "Reddit API" /home/cayir/cicd_project/logs/reddit_sentiment_errors.log | tail -20
+   
+   # Check for sentiment analysis errors
+   grep "sentiment" /home/cayir/cicd_project/logs/reddit_sentiment_errors.log | tail -20
+   
+   # Check for database errors
+   grep -i "database\|sqlite" /home/cayir/cicd_project/logs/reddit_sentiment_errors.log | tail -20
+   ```
+
+**Resolution Steps**:
+1. If Reddit API errors dominate:
+   ```bash
+   # Reduce API request rate
+   sed -i 's/REDDIT_REQUEST_DELAY=1/REDDIT_REQUEST_DELAY=2/' /home/cayir/cicd_project/config/production.env
+   sudo systemctl restart reddit-sentiment-pipeline.service
+   ```
+
+2. If sentiment analysis errors:
+   ```bash
+   # Clear model cache and restart
+   rm -rf /tmp/transformers_cache
+   sudo systemctl restart reddit-sentiment-pipeline.service
+   ```
+
+3. If database errors:
+   ```bash
+   # Check database integrity
+   sqlite3 /home/cayir/cicd_project/data/reddit_posts.db "PRAGMA integrity_check;"
+   
+   # If corrupted, restore from backup
+   python3 /home/cayir/cicd_project/scripts/backup_manager.py restore --latest
    ```
 
 #### Reddit API Errors
@@ -583,6 +695,95 @@ sqlite3 /home/cayir/cicd_project/data/reddit_sentiment.db "PRAGMA integrity_chec
 
 # Restart services
 sudo systemctl restart reddit-sentiment-pipeline.service
+```
+
+## Alert Escalation
+
+### Escalation Policies
+
+The system follows structured escalation policies based on alert severity and duration:
+
+#### Critical Alert Escalation
+1. **Step 1** (0 minutes): Immediate notification to primary on-call and GitHub issue creation
+2. **Step 2** (5 minutes): Escalate to secondary on-call if not acknowledged
+3. **Step 3** (15 minutes): Escalate to engineering manager and platform team
+
+#### Warning Alert Escalation
+1. **Step 1** (0 minutes): Notification to primary on-call and GitHub issue creation
+2. **Step 2** (30 minutes): Escalate to secondary on-call if not acknowledged
+3. **Step 3** (2 hours): Escalate to team lead if not resolved
+
+#### Escalation Commands
+
+```bash
+# Check active alerts
+curl -s http://localhost:9093/api/v1/alerts | jq '.data[] | select(.status.state=="active")'
+
+# Force escalation for critical issues
+curl -X POST http://localhost:9093/api/v1/alerts \
+  -H "Content-Type: application/json" \
+  -d '{"alerts":[{"labels":{"alertname":"ManualEscalation","severity":"critical"}}]}'
+
+# Check escalation status in GitHub
+curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/YasCay/cicd_project/issues?labels=alert,critical&state=open"
+```
+
+## GitHub Issue Management
+
+### Automatic Issue Creation
+
+The alert system automatically creates GitHub issues for all alerts:
+
+- **Critical alerts**: Immediately create P0 issues with "critical" and "incident" labels
+- **Warning alerts**: Create P1 issues with "warning" label
+- **Info alerts**: Create monitoring issues with "info" and "monitoring" labels
+
+### Issue Management Commands
+
+```bash
+# Check active alert issues
+curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/YasCay/cicd_project/issues?labels=alert&state=open" | \
+  jq '.[] | {number: .number, title: .title, labels: [.labels[].name]}'
+
+# Manually close resolved alerts
+curl -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/YasCay/cicd_project/issues/ISSUE_NUMBER" \
+  -d '{"state":"closed","labels":["alert","resolved"]}'
+
+# Add investigation notes to issue
+curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/YasCay/cicd_project/issues/ISSUE_NUMBER/comments" \
+  -d '{"body":"Investigation completed. Root cause: [DETAILS]. Resolution: [ACTIONS]"}'
+```
+
+### Issue Templates
+
+**Critical Alert Issue Template**:
+```markdown
+## 🚨 Critical Alert: [ALERT_NAME]
+
+**Alert Details:**
+- Severity: Critical
+- Started: [TIMESTAMP]
+- Service: reddit-sentiment-pipeline
+- Instance: [INSTANCE]
+
+**Symptoms:**
+[ALERT_DESCRIPTION]
+
+**Investigation Checklist:**
+- [ ] Check service status
+- [ ] Review recent logs
+- [ ] Verify system resources
+- [ ] Check dependencies
+
+**Resolution Steps:**
+1. [ACTION_TAKEN]
+2. [NEXT_STEPS]
+
+**Runbook:** https://github.com/YasCay/cicd_project/blob/main/docs/monitoring-runbook.md
 ```
 
 ---

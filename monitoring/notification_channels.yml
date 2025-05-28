@@ -1,0 +1,193 @@
+# Notification Channels Configuration
+# Defines how alerts are sent to various notification channels
+
+github:
+  webhook_url: "https://api.github.com/repos/YasCay/cicd_project/issues"
+  token: "${GITHUB_TOKEN_PAT}"
+  repository: "YasCay/cicd_project"
+  default_labels: 
+    - "alert"
+    - "monitoring"
+    - "automated"
+  default_assignees:
+    - "YasCay"
+  issue_template: |
+    ## 🚨 Alert: {{ .AlertName }}
+    
+    **Severity:** {{ .Severity }}
+    **Service:** {{ .Service }}
+    **Status:** {{ .Status }}
+    
+    ### Details
+    {{ .Description }}
+    
+    ### Metrics
+    {{ range .Alerts }}
+    - **Instance:** {{ .Labels.instance }}
+    - **Value:** {{ .Annotations.value }}
+    - **Started:** {{ .StartsAt }}
+    {{ end }}
+    
+    ### Resolution Steps
+    1. Check service status
+    2. Review logs
+    3. Follow runbook: {{ .RunbookURL }}
+    
+    ---
+    *This issue was automatically created by the monitoring system*
+
+slack:
+  enabled: false
+  webhook_url: "${SLACK_WEBHOOK_URL}"
+  channel: "#alerts"
+  username: "AlertManager"
+  icon_emoji: ":warning:"
+  
+email:
+  enabled: false
+  smtp_host: "localhost"
+  smtp_port: 587
+  from: "alerts@cicd-project.local"
+  to: 
+    - "admin@cicd-project.local"
+  subject_template: "[ALERT] {{ .AlertName }} - {{ .Severity }}"
+  
+webhook:
+  enabled: true
+  url: "http://localhost:8080/webhook/alerts"
+  timeout: 30s
+  retry_attempts: 3
+  retry_delay: 5s
+  headers:
+    Content-Type: "application/json"
+    Authorization: "Bearer ${WEBHOOK_TOKEN}"
+  
+pagerduty:
+  enabled: false
+  integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+  severity_mapping:
+    critical: "critical"
+    warning: "warning"
+    info: "info"
+
+# Channel routing rules
+routing:
+  default_channel: "github"
+  rules:
+    - match:
+        severity: "critical"
+      channels: ["github", "webhook"]
+      escalation_delay: "5m"
+    
+    - match:
+        severity: "warning"
+      channels: ["github"]
+      escalation_delay: "15m"
+    
+    - match:
+        service: "reddit-sentiment-pipeline"
+      channels: ["github", "webhook"]
+      
+    - match:
+        component: "database"
+      channels: ["github", "webhook"]
+      priority: "high"
+
+# Notification formatting
+formatting:
+  github:
+    title_template: "{{ .Severity | upper }}: {{ .AlertName }}"
+    body_template: |
+      ## Alert Details
+      
+      **Service:** {{ .Service }}
+      **Component:** {{ .Component }}
+      **Severity:** {{ .Severity }}
+      **Status:** {{ .Status }}
+      
+      ### Description
+      {{ .Description }}
+      
+      ### Current Values
+      {{ range .Alerts }}
+      - **{{ .Labels.instance }}:** {{ .Annotations.value }}
+      {{ end }}
+      
+      ### Actions Required
+      {{ if eq .Severity "critical" }}
+      🚨 **IMMEDIATE ACTION REQUIRED**
+      {{ else }}
+      ⚠️ **ATTENTION NEEDED**
+      {{ end }}
+      
+      1. Investigate the issue using the monitoring dashboard
+      2. Check service logs: `journalctl -u {{ .Service }} -f`
+      3. Follow the runbook: {{ .RunbookURL }}
+      4. Update this issue with resolution steps
+      
+      ### Monitoring Links
+      - [Grafana Dashboard](http://localhost:3000/d/reddit-sentiment-pipeline)
+      - [Prometheus Targets](http://localhost:9090/targets)
+      - [Service Logs](http://localhost:3000/explore)
+      
+      ---
+      **Alert ID:** {{ .AlertUID }}  
+      **Generated:** {{ .StartsAt }}  
+      **Auto-created by monitoring system**
+
+  webhook:
+    payload_template: |
+      {
+        "alert_name": "{{ .AlertName }}",
+        "severity": "{{ .Severity }}",
+        "service": "{{ .Service }}",
+        "status": "{{ .Status }}",
+        "description": "{{ .Description }}",
+        "runbook_url": "{{ .RunbookURL }}",
+        "starts_at": "{{ .StartsAt }}",
+        "ends_at": "{{ .EndsAt }}",
+        "alerts": [
+          {{ range .Alerts }}
+          {
+            "labels": {{ .Labels | toJSON }},
+            "annotations": {{ .Annotations | toJSON }},
+            "starts_at": "{{ .StartsAt }}",
+            "ends_at": "{{ .EndsAt }}"
+          }{{ if not (last .) }},{{ end }}
+          {{ end }}
+        ]
+      }
+
+# Rate limiting and throttling
+rate_limiting:
+  enabled: true
+  max_alerts_per_minute: 10
+  max_alerts_per_hour: 50
+  burst_size: 5
+  
+  # Throttling rules
+  throttling:
+    - match:
+        severity: "warning"
+      rate_limit: "1/5m"  # Max 1 warning per 5 minutes for same alert
+    
+    - match:
+        severity: "critical"
+      rate_limit: "1/1m"  # Max 1 critical per minute for same alert
+
+# Auto-resolution settings
+auto_resolution:
+  enabled: true
+  close_resolved_alerts: true
+  resolution_comment: |
+    ## ✅ Alert Resolved
+    
+    This alert has been automatically resolved by the monitoring system.
+    
+    **Resolved at:** {{ .EndsAt }}
+    **Duration:** {{ .Duration }}
+    
+    The issue appears to have been resolved. Please verify that the service is functioning normally.
+    
+    ---
+    *Auto-resolved by monitoring system*

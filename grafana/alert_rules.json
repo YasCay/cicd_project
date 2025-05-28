@@ -1,0 +1,280 @@
+{
+  "rules": [
+    {
+      "uid": "reddit-pipeline-service-down",
+      "title": "Service Down Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "model": {
+            "expr": "up{job=\"reddit-sentiment-pipeline\"} == 0",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "5m",
+      "annotations": {
+        "description": "Reddit Sentiment Pipeline service is down for more than 5 minutes",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#service-down",
+        "summary": "Service Down - Immediate attention required"
+      },
+      "labels": {
+        "severity": "critical",
+        "service": "reddit-sentiment-pipeline",
+        "team": "platform"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-high-error-rate",
+      "title": "High Error Rate Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 900,
+            "to": 0
+          },
+          "model": {
+            "expr": "rate(reddit_api_errors_total[15m]) > 0.1",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "5m",
+      "annotations": {
+        "description": "High error rate detected: {{ $value }} errors per second over 15 minutes",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#high-error-rate",
+        "summary": "High Error Rate - API issues detected"
+      },
+      "labels": {
+        "severity": "warning",
+        "service": "reddit-sentiment-pipeline",
+        "component": "api"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-resource-usage",
+      "title": "Resource Usage Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 600,
+            "to": 0
+          },
+          "model": {
+            "expr": "cpu_usage_percent{service=\"reddit-sentiment-pipeline\"} > 80",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "10m",
+      "annotations": {
+        "description": "High CPU usage detected: {{ $value }}% for more than 10 minutes",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#resource-usage",
+        "summary": "High Resource Usage - Performance degradation"
+      },
+      "labels": {
+        "severity": "warning",
+        "service": "reddit-sentiment-pipeline",
+        "component": "resources"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-memory-usage",
+      "title": "Memory Usage Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 300,
+            "to": 0
+          },
+          "model": {
+            "expr": "memory_usage_percent{service=\"reddit-sentiment-pipeline\"} > 85",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "5m",
+      "annotations": {
+        "description": "High memory usage detected: {{ $value }}% for more than 5 minutes",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#memory-usage",
+        "summary": "High Memory Usage - Potential memory leak"
+      },
+      "labels": {
+        "severity": "critical",
+        "service": "reddit-sentiment-pipeline",
+        "component": "memory"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-no-data",
+      "title": "No Data Processed Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 14400,
+            "to": 0
+          },
+          "model": {
+            "expr": "increase(posts_processed_total[4h]) == 0",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "10m",
+      "annotations": {
+        "description": "No posts have been processed in the last 4 hours",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#no-data-processed",
+        "summary": "Data Pipeline Stalled - No posts processed"
+      },
+      "labels": {
+        "severity": "warning",
+        "service": "reddit-sentiment-pipeline",
+        "component": "data-pipeline"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-database-errors",
+      "title": "Database Connection Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 60,
+            "to": 0
+          },
+          "model": {
+            "expr": "database_connection_errors_total > 0",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "1m",
+      "annotations": {
+        "description": "Database connection errors detected: {{ $value }} errors",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#database-errors",
+        "summary": "Database Connection Issues - Data persistence affected"
+      },
+      "labels": {
+        "severity": "critical",
+        "service": "reddit-sentiment-pipeline",
+        "component": "database"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-backup-failure",
+      "title": "Backup Failure Alert",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 86400,
+            "to": 0
+          },
+          "model": {
+            "expr": "backup_last_success_timestamp < (time() - 86400)",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "5m",
+      "annotations": {
+        "description": "Backup has not completed successfully in the last 24 hours",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#backup-failure",
+        "summary": "Backup System Failure - Data recovery at risk"
+      },
+      "labels": {
+        "severity": "warning",
+        "service": "reddit-sentiment-pipeline",
+        "component": "backup"
+      }
+    },
+    {
+      "uid": "reddit-pipeline-sentiment-failures",
+      "title": "Sentiment Analysis Failures",
+      "condition": "A",
+      "data": [
+        {
+          "refId": "A",
+          "queryType": "",
+          "relativeTimeRange": {
+            "from": 900,
+            "to": 0
+          },
+          "model": {
+            "expr": "increase(sentiment_analysis_errors_total[15m]) > 5",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        }
+      ],
+      "noDataState": "NoData",
+      "execErrState": "Alerting",
+      "for": "5m",
+      "annotations": {
+        "description": "Multiple sentiment analysis failures: {{ $value }} failures in 15 minutes",
+        "runbook_url": "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#sentiment-failures",
+        "summary": "FinBERT Model Issues - Sentiment analysis degraded"
+      },
+      "labels": {
+        "severity": "warning",
+        "service": "reddit-sentiment-pipeline",
+        "component": "sentiment-analysis"
+      }
+    }
+  ],
+  "title": "Reddit Sentiment Pipeline Alert Rules",
+  "tags": ["reddit", "sentiment", "pipeline", "monitoring"],
+  "timezone": "UTC",
+  "version": 1
+}

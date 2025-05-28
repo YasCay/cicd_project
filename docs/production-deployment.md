@@ -123,7 +123,7 @@ export REDDIT_CLIENT_SECRET="your_client_secret"
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/reddit-sentiment-pipeline.git /home/cayir/cicd_project
+git clone https://github.com/YasCay/cicd_project.git /home/cayir/cicd_project
 cd /home/cayir/cicd_project
 
 # Checkout production branch

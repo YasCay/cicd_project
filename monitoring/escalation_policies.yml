@@ -1,0 +1,139 @@
+# Alert Escalation Policies for Reddit Sentiment Pipeline
+# Defines how alerts are escalated based on severity and duration
+
+policies:
+  - name: "critical_incidents"
+    severity: "critical"
+    description: "Critical severity incidents that require immediate attention"
+    escalation_steps:
+      - step: 1
+        delay: "0m"  # Immediate
+        notify:
+          - "primary_oncall"
+          - "github_issues"
+        channels:
+          - "webhook_github"
+          - "email_primary"
+      - step: 2
+        delay: "5m"  # If not acknowledged in 5 minutes
+        notify:
+          - "secondary_oncall"
+          - "slack_alerts"
+        channels:
+          - "webhook_github"
+          - "email_secondary"
+          - "slack_critical"
+      - step: 3
+        delay: "15m"  # If not resolved in 15 minutes
+        notify:
+          - "engineering_manager"
+          - "platform_team"
+        channels:
+          - "webhook_github"
+          - "email_escalation"
+          - "slack_engineering"
+
+  - name: "warning_incidents"
+    severity: "warning"
+    description: "Warning severity incidents that need attention but not immediate"
+    escalation_steps:
+      - step: 1
+        delay: "0m"  # Immediate
+        notify:
+          - "primary_oncall"
+          - "github_issues"
+        channels:
+          - "webhook_github"
+      - step: 2
+        delay: "30m"  # If not acknowledged in 30 minutes
+        notify:
+          - "secondary_oncall"
+        channels:
+          - "webhook_github"
+          - "email_primary"
+      - step: 3
+        delay: "2h"  # If not resolved in 2 hours
+        notify:
+          - "team_lead"
+        channels:
+          - "webhook_github"
+          - "email_secondary"
+
+  - name: "info_incidents"
+    severity: "info"
+    description: "Informational alerts for monitoring and tracking"
+    escalation_steps:
+      - step: 1
+        delay: "0m"
+        notify:
+          - "github_issues"
+        channels:
+          - "webhook_github"
+      - step: 2
+        delay: "24h"  # Daily summary if not resolved
+        notify:
+          - "team_lead"
+        channels:
+          - "email_summary"
+
+# Escalation rules configuration
+rules:
+  # Auto-escalate based on alert duration
+  auto_escalation:
+    enabled: true
+    critical_threshold: "10m"  # Auto-escalate critical alerts after 10 minutes
+    warning_threshold: "1h"    # Auto-escalate warning alerts after 1 hour
+    
+  # De-escalation rules
+  de_escalation:
+    enabled: true
+    auto_resolve_threshold: "24h"  # Auto-resolve info alerts after 24h if no activity
+    
+  # Notification frequency limits
+  rate_limiting:
+    max_notifications_per_hour: 10
+    max_notifications_per_day: 50
+    cooldown_period: "5m"  # Minimum time between notifications for same alert
+
+# Contact definitions
+contacts:
+  primary_oncall:
+    name: "Primary On-Call Engineer"
+    github_username: "YasCay"
+    email: "primary@company.com"
+    phone: "+1-555-0001"
+    
+  secondary_oncall:
+    name: "Secondary On-Call Engineer"
+    github_username: "backup-engineer"
+    email: "secondary@company.com"
+    phone: "+1-555-0002"
+    
+  engineering_manager:
+    name: "Engineering Manager"
+    github_username: "eng-manager"
+    email: "manager@company.com"
+    
+  team_lead:
+    name: "Team Lead"
+    github_username: "team-lead"
+    email: "lead@company.com"
+
+# Integration settings
+integrations:
+  github:
+    repository: "YasCay/cicd_project"
+    auto_create_issues: true
+    auto_assign: true
+    labels:
+      critical: ["critical", "incident", "P0"]
+      warning: ["warning", "P1"]
+      info: ["info", "monitoring"]
+    
+  prometheus:
+    alertmanager_webhook: "http://alertmanager:9093/api/v1/webhook"
+    
+  grafana:
+    notification_channels:
+      - "github-alerts"
+      - "email-alerts"

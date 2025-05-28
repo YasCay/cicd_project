@@ -14,7 +14,7 @@ groups:
         annotations:
           summary: "Reddit Sentiment Pipeline is down"
           description: "The Reddit Sentiment Pipeline service has been down for more than 5 minutes."
-          runbook_url: "https://github.com/yasar/cicd_project/docs/monitoring-runbook.md#service-down"
+          runbook_url: "https://github.com/YasCay/cicd_project/docs/monitoring-runbook.md#service-down"
 
       - alert: RedditSentimentPipelineRestartLoop
         expr: increase(prometheus_engine_config_last_reload_success_timestamp_seconds{job="reddit-sentiment-pipeline"}[15m]) > 3

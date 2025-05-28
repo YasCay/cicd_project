@@ -13,7 +13,7 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/your-org/reddit-sentiment-pipeline
+    repoURL: https://github.com/YasCay/cicd_project
     targetRevision: HEAD
     path: helm/reddit-sentiment-pipeline
     helm:

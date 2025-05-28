@@ -68,11 +68,13 @@ class RedditSentimentCollector:
         # Metrics configuration
         self.enable_metrics = os.getenv("ENABLE_METRICS", "true").lower() == "true"
         self.metrics_port = int(os.getenv("METRICS_PORT", "8000"))
-        
+
         # Initialize metrics
         if self.enable_metrics:
             self.metrics = get_metrics()
-            self.metrics_server = MetricsServer(port=self.metrics_port, metrics=self.metrics)
+            self.metrics_server = MetricsServer(
+                port=self.metrics_port, metrics=self.metrics
+            )
             logger.info(f"Metrics enabled on port {self.metrics_port}")
         else:
             self.metrics = None
@@ -84,7 +86,7 @@ class RedditSentimentCollector:
         self.deduplicator = PostDeduplicator(
             db_path=dedup_db_path, capacity=dedup_capacity
         )
-        
+
         # Initialize sentiment analyzer
         if enable_sentiment:
             self.sentiment_analyzer = self._init_sentiment_analyzer(
@@ -127,26 +129,31 @@ class RedditSentimentCollector:
             )
             return None
 
-    def _init_sentiment_analyzer(self, model_name: str, batch_size: int) -> FinBERTSentimentAnalyzer:
+    def _init_sentiment_analyzer(
+        self, model_name: str, batch_size: int
+    ) -> FinBERTSentimentAnalyzer:
         """Initialize FinBERT sentiment analyzer with error handling."""
         try:
             start_time = time.time()
             analyzer = FinBERTSentimentAnalyzer(
-                model_name=model_name, 
-                batch_size=batch_size
+                model_name=model_name, batch_size=batch_size
             )
             load_duration = time.time() - start_time
-            
+
             # Record metrics
             if self.metrics:
                 self.metrics.record_model_load_time(load_duration)
-            
-            logger.info(f"FinBERT sentiment analyzer initialized: {model_name} ({load_duration:.2f}s)")
+
+            logger.info(
+                f"FinBERT sentiment analyzer initialized: {model_name} ({load_duration:.2f}s)"
+            )
             return analyzer
         except Exception as e:
             if self.metrics:
                 self.metrics.record_error("sentiment_analyzer", "initialization_failed")
-            logger.warning(f"Failed to initialize FinBERT analyzer: {e} - sentiment analysis disabled")
+            logger.warning(
+                f"Failed to initialize FinBERT analyzer: {e} - sentiment analysis disabled"
+            )
             return None
 
     def create_dummy_data(self) -> pd.DataFrame:
@@ -205,12 +212,16 @@ class RedditSentimentCollector:
                     subreddit_posts.append(post_data)
 
                 posts.extend(subreddit_posts)
-                
+
                 # Record metrics for this subreddit
                 if self.metrics:
-                    self.metrics.record_posts_fetched(len(subreddit_posts), subreddit_name)
+                    self.metrics.record_posts_fetched(
+                        len(subreddit_posts), subreddit_name
+                    )
 
-                logger.info(f"Fetched {len(subreddit_posts)} posts from r/{subreddit_name}")
+                logger.info(
+                    f"Fetched {len(subreddit_posts)} posts from r/{subreddit_name}"
+                )
 
             except Exception as e:
                 if self.metrics:
@@ -257,9 +268,9 @@ class RedditSentimentCollector:
         # Perform sentiment analysis
         if self.sentiment_analyzer:
             logger.info(f"Analyzing sentiment for {len(df)} posts...")
-            
+
             start_time = time.time()
-            
+
             # Combine title and content for sentiment analysis
             texts_for_analysis = []
             for _, row in df.iterrows():
@@ -268,34 +279,46 @@ class RedditSentimentCollector:
                 # Combine title and content, prioritizing title if content is empty
                 combined_text = f"{title}. {content}".strip() if content else title
                 texts_for_analysis.append(combined_text)
-            
+
             # Batch sentiment analysis
-            sentiment_results = self.sentiment_analyzer.analyze_batch(texts_for_analysis)
-            
+            sentiment_results = self.sentiment_analyzer.analyze_batch(
+                texts_for_analysis
+            )
+
             # Record sentiment analysis metrics
             analysis_duration = time.time() - start_time
             if self.metrics:
                 self.metrics.record_sentiment_analysis(analysis_duration, len(df))
-            
+
             # Add sentiment columns
             df["sentiment_label"] = [result["label"] for result in sentiment_results]
-            df["sentiment_confidence"] = [result["confidence"] for result in sentiment_results]
-            df["sentiment_positive"] = [result["positive"] for result in sentiment_results]
-            df["sentiment_negative"] = [result["negative"] for result in sentiment_results]
-            df["sentiment_neutral"] = [result["neutral"] for result in sentiment_results]
-            
+            df["sentiment_confidence"] = [
+                result["confidence"] for result in sentiment_results
+            ]
+            df["sentiment_positive"] = [
+                result["positive"] for result in sentiment_results
+            ]
+            df["sentiment_negative"] = [
+                result["negative"] for result in sentiment_results
+            ]
+            df["sentiment_neutral"] = [
+                result["neutral"] for result in sentiment_results
+            ]
+
             # Legacy compatibility - use confidence as score
             df["sentiment_score"] = df["sentiment_confidence"]
-            
-            logger.info(f"Sentiment analysis completed for {len(df)} posts ({analysis_duration:.2f}s)")
-            
+
+            logger.info(
+                f"Sentiment analysis completed for {len(df)} posts ({analysis_duration:.2f}s)"
+            )
+
             # Log sentiment distribution and record metrics
             sentiment_counts = df["sentiment_label"].value_counts()
             logger.info(f"Sentiment distribution: {sentiment_counts.to_dict()}")
-            
+
             if self.metrics:
                 self.metrics.record_sentiment_distribution(sentiment_counts.to_dict())
-            
+
         else:
             # Fallback to neutral sentiment
             logger.info("Sentiment analyzer not available, using neutral sentiment")
@@ -335,7 +358,7 @@ class RedditSentimentCollector:
             # Deduplicate posts
             logger.info(f"Deduplicating {len(posts)} posts...")
             unique_posts = self.deduplicator.deduplicate_posts(posts)
-            
+
             # Record deduplication metrics
             duplicates_count = len(posts) - len(unique_posts)
             if self.metrics:
@@ -391,17 +414,17 @@ class RedditSentimentCollector:
 
 class CollectorManager:
     """Manager for handling Docker lifecycle and signals."""
-    
+
     def __init__(self):
         self.collector = None
         self.running = True
         self.setup_signal_handlers()
-    
+
     def setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown."""
         signal.signal(signal.SIGTERM, self.signal_handler)
         signal.signal(signal.SIGINT, self.signal_handler)
-    
+
     def signal_handler(self, signum, frame):
         """Handle shutdown signals."""
         logger.info(f"Received signal {signum}, initiating graceful shutdown...")
@@ -409,24 +432,26 @@ class CollectorManager:
         if self.collector:
             self.collector.shutdown()
         sys.exit(0)
-    
+
     def run_as_service(self):
         """Run collector as a long-running service with metrics server."""
         logger.info("Starting collector in service mode with metrics endpoint...")
-        
+
         try:
             self.collector = RedditSentimentCollector()
-            
+
             # Start metrics server if enabled
             if self.collector.metrics_server:
                 self.collector.metrics_server.start()
-                logger.info(f"Metrics server started on port {self.collector.metrics_port}")
-            
+                logger.info(
+                    f"Metrics server started on port {self.collector.metrics_port}"
+                )
+
             # Keep the service running
             logger.info("Collector service is running. Press Ctrl+C to stop.")
             while self.running:
                 time.sleep(10)  # Check every 10 seconds
-                
+
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt")
         except Exception as e:
@@ -435,21 +460,23 @@ class CollectorManager:
         finally:
             if self.collector:
                 self.collector.shutdown()
-    
+
     def run_once(self):
         """Run collector once (CronJob mode)."""
         logger.info("Running collector in CronJob mode...")
         try:
             self.collector = RedditSentimentCollector()
-            
+
             # Start metrics server if enabled
             if self.collector.metrics_server:
                 self.collector.metrics_server.start()
-                logger.info(f"Metrics server started on port {self.collector.metrics_port}")
-            
+                logger.info(
+                    f"Metrics server started on port {self.collector.metrics_port}"
+                )
+
             # Run the collection
             self.collector.run()
-            
+
         except Exception as e:
             logger.error(f"CronJob execution failed: {e}")
             raise
@@ -462,9 +489,9 @@ def main():
     """Entry point for the collector."""
     # Check if running in service mode (for Docker)
     run_mode = os.getenv("RUN_MODE", "once").lower()
-    
+
     manager = CollectorManager()
-    
+
     if run_mode == "service":
         manager.run_as_service()
     else:

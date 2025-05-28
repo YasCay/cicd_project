@@ -4,9 +4,9 @@ python-dotenv>=1.0.0
 praw>=7.7.0
 pybloom-live>=4.0.0
 
-# FinBERT sentiment analysis (CPU-only versions)
+# FinBERT sentiment analysis 
+# Note: torch is installed separately with CPU-only version in Docker/CI
 transformers==4.52.3
-torch==2.7.0
 numpy>=1.24.0
 
 # Testing

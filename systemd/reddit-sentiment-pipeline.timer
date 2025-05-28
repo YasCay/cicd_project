@@ -1,0 +1,17 @@
+[Unit]
+Description=Reddit Sentiment Analysis Pipeline Timer
+Documentation=https://github.com/your-org/reddit-sentiment-pipeline
+Requires=reddit-sentiment-pipeline.service
+
+[Timer]
+# Run every 3 hours
+OnCalendar=*:0/3:00
+# Run immediately if system was down during scheduled time
+Persistent=true
+# Randomize start time by up to 10 minutes to avoid system load spikes
+RandomizedDelaySec=600
+# Prevent overlap of jobs
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,183 @@
+---
+# GitOps Workflow for Reddit Sentiment Pipeline
+# This file documents the complete GitOps workflow and integration points
+
+name: GitOps Deployment Workflow
+description: Automated deployment pipeline using Argo CD and Kubernetes
+
+# Workflow Steps:
+# 1. Code changes pushed to main branch
+# 2. GitHub Actions CI/CD pipeline runs
+# 3. Docker image built and pushed to registry
+# 4. Helm chart values updated with new image tag
+# 5. Argo CD detects changes and syncs application
+# 6. Kubernetes resources updated
+# 7. Monitoring and alerting active
+
+workflow:
+  triggers:
+    - push to main branch
+    - pull request to main
+    - scheduled runs (every 3 hours)
+  
+  stages:
+    ci_cd:
+      - code_quality_checks
+      - security_scanning
+      - unit_tests
+      - integration_tests
+      - docker_build
+      - helm_package
+      - artifact_publishing
+    
+    gitops_deployment:
+      - argocd_sync
+      - kubernetes_deployment
+      - health_checks
+      - monitoring_setup
+      - alerting_configuration
+
+# Environment Configuration
+environments:
+  development:
+    namespace: reddit-sentiment-dev
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    schedule: "*/15 * * * *"  # Every 15 minutes for testing
+  
+  staging:
+    namespace: reddit-sentiment-staging
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    schedule: "0 */6 * * *"  # Every 6 hours
+  
+  production:
+    namespace: reddit-sentiment
+    replicas: 1
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+    schedule: "0 */3 * * *"  # Every 3 hours
+
+# Integration Points
+integrations:
+  github_actions:
+    workflows:
+      - ci.yml (main CI/CD pipeline)
+      - dependency-review.yml (security)
+      - auto-merge.yml (Dependabot)
+      - release.yml (releases)
+  
+  argocd:
+    applications:
+      - reddit-sentiment-pipeline (main application)
+    projects:
+      - reddit-sentiment (project isolation)
+    sync_policy:
+      - automated: true
+      - self_heal: true
+      - prune: true
+  
+  kubernetes:
+    resources:
+      - CronJob (scheduled execution)
+      - ConfigMap (configuration)
+      - Secret (credentials)
+      - PersistentVolumeClaim (data storage)
+      - ServiceAccount (security)
+      - NetworkPolicy (network isolation)
+      - PodDisruptionBudget (availability)
+  
+  monitoring:
+    prometheus:
+      - ServiceMonitor (metrics collection)
+      - PrometheusRule (alerting rules)
+    grafana:
+      - Dashboard (visualization)
+      - Alerts (notifications)
+  
+  storage:
+    persistent_volumes:
+      - data storage (Reddit posts, deduplication DB)
+      - logs (application logs)
+      - backups (automated backups)
+
+# Security Configuration
+security:
+  network_policies:
+    - ingress: restricted to monitoring namespace
+    - egress: allow Reddit API and internal services
+  
+  pod_security:
+    - non_root_user: true
+    - read_only_filesystem: true
+    - dropped_capabilities: ["ALL"]
+    - security_context: restricted
+  
+  secrets_management:
+    - reddit_api_credentials: Kubernetes Secret
+    - database_credentials: auto-generated
+    - monitoring_tokens: ServiceAccount tokens
+  
+  rbac:
+    - minimal_permissions: read-only except for data directory
+    - service_account: dedicated account per environment
+    - role_binding: namespace-scoped permissions
+
+# Monitoring and Alerting
+monitoring:
+  metrics:
+    - pipeline_execution_time_seconds
+    - pipeline_posts_fetched_total
+    - pipeline_posts_processed_total
+    - pipeline_duplicates_found_total
+    - pipeline_sentiment_distribution
+    - pipeline_errors_total
+    - pipeline_api_requests_total
+  
+  alerts:
+    - pipeline_execution_failure
+    - pipeline_execution_timeout
+    - high_error_rate
+    - reddit_api_failure
+    - storage_full
+    - memory_usage_high
+  
+  dashboards:
+    - reddit_sentiment_pipeline (main dashboard)
+    - kubernetes_resources (resource usage)
+    - application_health (health metrics)
+
+# Backup and Recovery
+backup:
+  strategy:
+    - automated_daily_backups
+    - retention_policy: 30 days
+    - offsite_storage: cloud backup
+  
+  components:
+    - data_directory: /app/data
+    - deduplication_database: SQLite files
+    - configuration_files: .env, ConfigMaps
+    - application_logs: structured logging
+  
+  recovery:
+    - point_in_time_recovery: supported
+    - disaster_recovery: documented procedures
+    - testing: monthly recovery tests

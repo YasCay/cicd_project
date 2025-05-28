@@ -1,0 +1,24 @@
+apiVersion: v2
+name: reddit-sentiment-pipeline
+description: A Helm chart for Reddit sentiment analysis pipeline
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - reddit
+  - sentiment-analysis
+  - finbert
+  - nlp
+  - cronjob
+
+home: https://github.com/your-username/reddit-sentiment-pipeline
+sources:
+  - https://github.com/your-username/reddit-sentiment-pipeline
+
+maintainers:
+  - name: DevOps Team
+    email: devops@company.com
+
+annotations:
+  category: Analytics

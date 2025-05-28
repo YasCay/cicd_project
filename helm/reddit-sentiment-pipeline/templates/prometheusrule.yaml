@@ -1,0 +1,63 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "reddit-sentiment-pipeline.fullname" . }}
+  labels:
+    {{- include "reddit-sentiment-pipeline.labels" . | nindent 4 }}
+spec:
+  groups:
+  - name: reddit-sentiment-pipeline.rules
+    rules:
+    {{- if .Values.monitoring.alerts.jobFailure.enabled }}
+    - alert: RedditSentimentPipelineJobFailed
+      expr: |
+        kube_job_status_failed{job_name=~"{{ include "reddit-sentiment-pipeline.fullname" . }}-.*"} > 0
+      for: 0m
+      labels:
+        severity: {{ .Values.monitoring.alerts.jobFailure.severity }}
+        service: {{ include "reddit-sentiment-pipeline.name" . }}
+      annotations:
+        summary: "Reddit sentiment pipeline job failed"
+        description: "CronJob {{ "{{ $labels.job_name }}" }} in namespace {{ "{{ $labels.namespace }}" }} failed"
+        runbook_url: "https://github.com/your-username/reddit-sentiment-pipeline/blob/main/docs/runbooks/job-failure.md"
+    {{- end }}
+    
+    {{- if .Values.monitoring.alerts.jobDuration.enabled }}
+    - alert: RedditSentimentPipelineJobTooLong
+      expr: |
+        time() - kube_job_status_start_time{job_name=~"{{ include "reddit-sentiment-pipeline.fullname" . }}-.*"} > {{ .Values.monitoring.alerts.jobDuration.threshold }}
+      for: 5m
+      labels:
+        severity: {{ .Values.monitoring.alerts.jobDuration.severity }}
+        service: {{ include "reddit-sentiment-pipeline.name" . }}
+      annotations:
+        summary: "Reddit sentiment pipeline job running too long"
+        description: "CronJob {{ "{{ $labels.job_name }}" }} in namespace {{ "{{ $labels.namespace }}" }} has been running for more than {{ .Values.monitoring.alerts.jobDuration.threshold }} seconds"
+        runbook_url: "https://github.com/your-username/reddit-sentiment-pipeline/blob/main/docs/runbooks/job-duration.md"
+    {{- end }}
+    
+    - alert: RedditSentimentPipelineJobMissing
+      expr: |
+        (time() - kube_cronjob_next_schedule_time{cronjob=~"{{ include "reddit-sentiment-pipeline.fullname" . }}"}) > 3900
+      for: 10m
+      labels:
+        severity: warning
+        service: {{ include "reddit-sentiment-pipeline.name" . }}
+      annotations:
+        summary: "Reddit sentiment pipeline missed schedule"
+        description: "CronJob {{ "{{ $labels.cronjob }}" }} in namespace {{ "{{ $labels.namespace }}" }} missed its schedule"
+        runbook_url: "https://github.com/your-username/reddit-sentiment-pipeline/blob/main/docs/runbooks/job-missing.md"
+    
+    - alert: RedditSentimentPipelineHighErrorRate
+      expr: |
+        rate(pipeline_errors_total{job=~"{{ include "reddit-sentiment-pipeline.fullname" . }}-.*"}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+        service: {{ include "reddit-sentiment-pipeline.name" . }}
+      annotations:
+        summary: "High error rate in Reddit sentiment pipeline"
+        description: "Error rate is {{ "{{ $value }}" }} errors per second over the last 5 minutes"
+        runbook_url: "https://github.com/your-username/reddit-sentiment-pipeline/blob/main/docs/runbooks/high-error-rate.md"
+{{- end }}

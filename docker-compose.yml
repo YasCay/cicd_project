@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  reddit-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: reddit-finbert-collector:latest
+    container_name: reddit-collector
+    environment:
+      # Application configuration
+      - PYTHONUNBUFFERED=1
+      - OUTPUT_PATH=/data/reddit_sentiment.csv
+      - DEDUP_DB_PATH=/data/dupes.db
+      
+      # Metrics configuration
+      - ENABLE_METRICS=true
+      - METRICS_PORT=8000
+      
+      # FinBERT configuration
+      - ENABLE_SENTIMENT=true
+      - FINBERT_MODEL=ProsusAI/finbert
+      - SENTIMENT_BATCH_SIZE=8
+      
+      # Deduplication settings
+      - DEDUP_CAPACITY=100000
+      
+      # Reddit API (set via .env file)
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-reddit-finbert-ci/1.0}
+      
+      # Optional overrides
+      - SUBREDDITS=${SUBREDDITS:-CryptoCurrency,Bitcoin,ethereum}
+      - FETCH_LIMIT=${FETCH_LIMIT:-100}
+    volumes:
+      # Persistent data storage
+      - collector-data:/data
+      # Optional: Mount local .env for development
+      - ./.env:/app/.env:ro
+    ports:
+      # Expose metrics endpoint
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - collector-network
+
+  # Optional: Prometheus for metrics collection (development/testing)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - collector-network
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for metrics visualization (development/testing)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - collector-network
+    profiles:
+      - monitoring
+
+volumes:
+  collector-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  collector-network:
+    driver: bridge

@@ -1,0 +1,53 @@
+[Unit]
+Description=Reddit Sentiment Analysis Pipeline
+Documentation=https://github.com/your-org/reddit-sentiment-pipeline
+After=network.target network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Service]
+Type=oneshot
+User=cayir
+Group=cayir
+WorkingDirectory=/home/cayir/cicd_project
+Environment=PYTHONPATH=/home/cayir/cicd_project
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/cayir/cicd_project/venv/bin/python -m apps.collector.collector
+ExecStartPre=/bin/bash -c 'cd /home/cayir/cicd_project && /home/cayir/cicd_project/scripts/health_check.py --once'
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/cayir/cicd_project/data /home/cayir/cicd_project/logs /var/log/reddit-sentiment-pipeline
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=100%
+TasksMax=100
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=reddit-sentiment-pipeline
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

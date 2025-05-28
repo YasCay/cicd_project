@@ -1,0 +1,58 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reddit-sentiment-pipeline
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: reddit-sentiment-pipeline
+    app.kubernetes.io/component: application
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/your-org/reddit-sentiment-pipeline
+    targetRevision: HEAD
+    path: helm/reddit-sentiment-pipeline
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.tag
+          value: "latest"
+        - name: schedule
+          value: "0 */3 * * *"  # Every 3 hours
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: reddit-sentiment
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  revisionHistoryLimit: 10
+  
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: batch
+      kind: CronJob
+      jsonPointers:
+        - /spec/jobTemplate/spec/template/metadata/annotations

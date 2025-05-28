@@ -1,0 +1,20 @@
+# Prometheus configuration for Reddit FinBERT Sentiment Collector
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # Add alerting rules here if needed
+
+scrape_configs:
+  # Reddit collector metrics
+  - job_name: 'reddit-collector'
+    static_configs:
+      - targets: ['reddit-collector:8000']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

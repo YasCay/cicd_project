@@ -1,0 +1,50 @@
+[Unit]
+Description=Reddit Sentiment Pipeline Health Monitor
+Documentation=https://github.com/your-org/reddit-sentiment-pipeline
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=cayir
+Group=cayir
+WorkingDirectory=/home/cayir/cicd_project
+Environment=PYTHONPATH=/home/cayir/cicd_project
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/cayir/cicd_project/scripts/health_check.py --continuous --interval 300
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/cayir/cicd_project/data /home/cayir/cicd_project/logs /var/log/reddit-sentiment-pipeline
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+TasksMax=50
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=reddit-sentiment-monitor
+
+# Restart policy
+Restart=always
+RestartSec=30
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

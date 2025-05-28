@@ -1,0 +1,189 @@
+# Security - Environment Files and Credentials
+.env
+.env.local
+.env.production
+.env.staging
+config/production.env
+config/*.env
+*.env
+
+# API Keys and Secrets
+secrets/
+credentials/
+keys/
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+
+# Reddit API Credentials
+reddit_credentials.txt
+praw.ini
+
+# GitHub Personal Access Tokens
+github_token.txt
+*.pat
+
+# SSH Keys
+id_rsa
+id_ed25519
+*.pub
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Testing
+.tox/
+.nox/
+.coverage
+.pytest_cache/
+htmlcov/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+log/
+*.log.*
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Data Files (if containing sensitive info)
+data/reddit_posts.csv
+data/sentiment_results.csv
+data/processed_data/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes Secrets
+secrets.yaml
+secret.yaml
+*-secret.yaml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Helm
+*.tgz
+charts/*.tgz
+
+# Monitoring and Alerting
+alertmanager/
+prometheus/data/
+
+# Backup Files
+*.backup
+*.bak
+backups/
+*.tar.gz
+*.zip
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Configuration Files with Sensitive Data
+nginx.conf
+apache.conf
+config/local.yaml
+config/secrets.yaml
+
+# Local Development
+local/
+dev/
+development/
+
+# Personal Notes
+notes.txt
+TODO.txt
+PERSONAL.md
+HISTORY_COPILOT.md

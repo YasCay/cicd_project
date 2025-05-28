@@ -1,0 +1,36 @@
+post_id,title,content,score,created_utc,subreddit,url,num_comments,sentiment_label,sentiment_score,run_id
+1kj7h8r,Mina Graph Explorer – Discover blockchain connections visually,"Hello !
+
+Let me introduce **Mina Graph Explorer**
+
+Mina Graph Explorer is a small open-source application (SPA/PWA/Responsive) I just developed, which lets you explore the blockchain in a fun and innovative new way.
+
+The app is available here: [https://webapp.minagraph.com](https://webapp.minagraph.com) and can be used directly in your favorite web browser or installed as a PWA on mobile, tablet, or desktop.
+
+Starting from a simple wallet address, it recursively explores all types of links to other addresses (smart contracts, native transactions, token transfers, etc.). The recursion depth is configurable, and the connections are displayed as a relational graph.
+
+Currently, the following blockchains are supported: **Ethereum, Polygon, Binance Smart Chain, Solana, and Mina Protocol**.
+
+You can filter the display by link type, address, or time range, and view detailed information about each connection by clicking on a node.
+
+The detail panel lists all connections with their types, and clicking on the connection type or block number opens the corresponding explorer (Etherscan, Polygonscan, etc.).
+
+The explorer is multi-chain and allows you to trace movements from a single EVM-compatible address across all supported EVM blockchains (Ethereum, Polygon, BSC for now).
+
+A few screenshots in the comments 👇
+
+Feel free to share your feedback, bug reports, or ideas for improvement!
+
+**Enjoy!** 🚀
+
+*Processing img kpovc7tnyjye1...*
+
+*Processing img h9mkvalpyjye1...*
+
+*Processing img p2l8dqjqyjye1...*
+
+*Processing img g2dobgfryjye1...*
+
+*Processing img yddnrp9syjye1...*
+
+*Processing img cw625qowyjye1...*",5,1746874246,ethereum,https://www.reddit.com/r/ethereum/comments/1kj7h8r/mina_graph_explorer_discover_blockchain/,1,neutral,0.5,

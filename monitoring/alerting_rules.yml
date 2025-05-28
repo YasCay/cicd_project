@@ -1,0 +1,198 @@
+# Prometheus Alerting Rules for Reddit Sentiment Pipeline
+# Production monitoring and alerting configuration
+
+groups:
+  - name: reddit_sentiment_pipeline
+    rules:
+      # Service Health Alerts
+      - alert: RedditSentimentPipelineDown
+        expr: up{job="reddit-sentiment-pipeline"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Reddit Sentiment Pipeline is down"
+          description: "The Reddit Sentiment Pipeline service has been down for more than 5 minutes."
+          runbook_url: "https://github.com/yasar/cicd_project/docs/monitoring-runbook.md#service-down"
+
+      - alert: RedditSentimentPipelineRestartLoop
+        expr: increase(prometheus_engine_config_last_reload_success_timestamp_seconds{job="reddit-sentiment-pipeline"}[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Reddit Sentiment Pipeline is restarting frequently"
+          description: "The service has restarted {{ $value }} times in the last 15 minutes."
+
+      # Resource Usage Alerts
+      - alert: HighCPUUsage
+        expr: cpu_usage_percent{service="reddit-sentiment-pipeline"} > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 10 minutes: {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: memory_usage_percent{service="reddit-sentiment-pipeline"} > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes: {{ $value }}%"
+
+      - alert: DiskSpaceRunningLow
+        expr: disk_usage_percent{service="reddit-sentiment-pipeline"} > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk usage is above 90%: {{ $value }}%"
+
+      # Pipeline Performance Alerts
+      - alert: RedditAPIErrors
+        expr: increase(reddit_api_errors_total[15m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "High Reddit API error rate"
+          description: "More than 10 Reddit API errors in the last 15 minutes"
+
+      - alert: SentimentAnalysisFailures
+        expr: increase(sentiment_analysis_errors_total[15m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Sentiment analysis failures detected"
+          description: "More than 5 sentiment analysis failures in the last 15 minutes"
+
+      - alert: NoDataProcessed
+        expr: increase(posts_processed_total[4h]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "No data processed in the last 4 hours"
+          description: "The pipeline hasn't processed any posts in the last 4 hours"
+
+      - alert: HighDuplicationRate
+        expr: (duplicates_found_total / posts_fetched_total) * 100 > 50
+        for: 15m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "High duplication rate detected"
+          description: "Duplication rate is above 50%: {{ $value }}%"
+
+      # Database and Storage Alerts
+      - alert: DatabaseConnectionFailure
+        expr: database_connection_errors_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Database connection failure"
+          description: "Unable to connect to the database"
+
+      - alert: BackupFailure
+        expr: backup_last_success_timestamp < (time() - 86400)
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "Backup has not completed successfully in 24 hours"
+          description: "Last successful backup was more than 24 hours ago"
+
+      - alert: LogFileErrors
+        expr: increase(log_errors_total[15m]) > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: reddit-sentiment-pipeline
+        annotations:
+          summary: "High error rate in logs"
+          description: "More than 20 errors logged in the last 15 minutes"
+
+  - name: system_health
+    rules:
+      # System-level alerts
+      - alert: SystemLoad
+        expr: node_load1 > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load"
+          description: "System load is above 2.0 for more than 10 minutes: {{ $value }}"
+
+      - alert: SystemMemory
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "System memory usage critical"
+          description: "System memory usage is above 90%: {{ $value }}%"
+
+      - alert: SystemDiskSpace
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "System disk space critical"
+          description: "System disk space usage is above 95%: {{ $value }}%"
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['service']
+
+# Route configuration for alert manager
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://localhost:9093/webhook'
+  
+  - name: 'critical-alerts'
+    webhook_configs:
+      - url: 'http://localhost:9093/webhook/critical'
+        send_resolved: true
+  
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://localhost:9093/webhook/warning'
+        send_resolved: true

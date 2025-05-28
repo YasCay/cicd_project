@@ -1,0 +1,130 @@
+# Default values for reddit-sentiment-pipeline.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+
+# Application configuration
+app:
+  name: reddit-sentiment-pipeline
+  version: "1.0.0"
+
+# Image configuration
+image:
+  repository: your-username/reddit-sentiment-pipeline
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Schedule configuration for CronJob
+schedule: "0 */3 * * *"  # Every 3 hours
+
+# Resource configuration
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "2Gi"
+    cpu: "1000m"
+
+# CronJob configuration
+cronjob:
+  # Schedule: every 3 hours
+  schedule: "0 */3 * * *"
+  timezone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  restartPolicy: OnFailure
+  backoffLimit: 3
+  activeDeadlineSeconds: 3600  # 1 hour timeout
+
+# Job configuration
+job:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  
+  # Node selector
+  nodeSelector: {}
+  
+  # Tolerations
+  tolerations: []
+  
+  # Affinity
+  affinity: {}
+
+# Reddit API configuration
+reddit:
+  # These should be provided via secrets
+  clientId: ""
+  clientSecret: ""
+  userAgent: "reddit-sentiment-pipeline/1.0"
+  subreddits: "CryptoCurrency,Bitcoin,ethereum"
+
+# Data persistence
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  mountPath: /app/data
+
+# Metrics configuration
+metrics:
+  enabled: true
+  port: 8000
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  readOnlyRootFilesystem: true
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Network policies
+networkPolicy:
+  enabled: false
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Monitoring and alerting
+monitoring:
+  enabled: true
+  alerts:
+    enabled: true
+    # Alert when job fails
+    jobFailure:
+      enabled: true
+      severity: warning
+    # Alert when job takes too long
+    jobDuration:
+      enabled: true
+      threshold: 3600  # 1 hour
+      severity: warning
+
+# Logging
+logging:
+  level: INFO
+  format: json

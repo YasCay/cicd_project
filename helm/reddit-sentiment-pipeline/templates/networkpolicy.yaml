@@ -1,0 +1,39 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "reddit-sentiment-pipeline.fullname" . }}
+  labels:
+    {{- include "reddit-sentiment-pipeline.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "reddit-sentiment-pipeline.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  - Egress
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS to external APIs (Reddit, etc.)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow HTTP for external APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+  {{- if .Values.metrics.enabled }}
+  ingress:
+  # Allow metrics scraping
+  - from: []
+    ports:
+    - protocol: TCP
+      port: {{ .Values.metrics.port }}
+  {{- end }}
+{{- end }}

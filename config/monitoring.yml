@@ -1,0 +1,297 @@
+# Monitoring Configuration for Reddit Sentiment Pipeline
+# Comprehensive monitoring setup for production environment
+
+# Application Monitoring Configuration
+application:
+  name: reddit-sentiment-pipeline
+  version: "1.0.0"
+  environment: production
+  
+  # Health Check Configuration
+  health_checks:
+    enabled: true
+    port: 8001
+    interval: 60  # seconds
+    timeout: 10   # seconds
+    endpoints:
+      - path: /health
+        method: GET
+        expected_status: 200
+      - path: /health/database
+        method: GET
+        expected_status: 200
+      - path: /health/reddit-api
+        method: GET
+        expected_status: 200
+      - path: /health/sentiment-model
+        method: GET
+        expected_status: 200
+  
+  # Metrics Configuration
+  metrics:
+    enabled: true
+    port: 8000
+    path: /metrics
+    collection_interval: 15  # seconds
+    
+    # Custom Metrics
+    custom_metrics:
+      - name: posts_processed_total
+        type: counter
+        description: "Total number of Reddit posts processed"
+        labels: ["subreddit", "status"]
+      
+      - name: sentiment_analysis_duration_seconds
+        type: histogram
+        description: "Time taken to analyze sentiment"
+        buckets: [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+      
+      - name: reddit_api_requests_total
+        type: counter
+        description: "Total Reddit API requests"
+        labels: ["endpoint", "status_code"]
+      
+      - name: duplicates_found_total
+        type: counter
+        description: "Total duplicate posts found"
+        labels: ["subreddit"]
+      
+      - name: pipeline_execution_duration_seconds
+        type: histogram
+        description: "Total pipeline execution time"
+        buckets: [30, 60, 120, 300, 600, 1200]
+
+# System Monitoring Configuration
+system:
+  # Resource Monitoring
+  resources:
+    cpu:
+      enabled: true
+      threshold_warning: 70  # percentage
+      threshold_critical: 85
+      collection_interval: 15
+    
+    memory:
+      enabled: true
+      threshold_warning: 80  # percentage
+      threshold_critical: 90
+      collection_interval: 15
+    
+    disk:
+      enabled: true
+      threshold_warning: 85  # percentage
+      threshold_critical: 95
+      collection_interval: 60
+      paths:
+        - /home/cayir/cicd_project
+        - /var/log
+        - /tmp
+    
+    network:
+      enabled: true
+      collection_interval: 30
+      interfaces: ["eth0", "lo"]
+  
+  # Process Monitoring
+  processes:
+    reddit_sentiment_pipeline:
+      enabled: true
+      pid_file: /var/run/reddit-sentiment-pipeline.pid
+      monitor_children: true
+      restart_on_failure: true
+      max_restarts: 5
+      restart_delay: 30  # seconds
+
+# Prometheus Integration
+prometheus:
+  enabled: true
+  url: http://localhost:9090
+  pushgateway:
+    enabled: true
+    url: http://localhost:9091
+    job_name: reddit-sentiment-pipeline
+    push_interval: 30  # seconds
+  
+  # Scrape Configuration
+  scrape_configs:
+    - job_name: reddit-sentiment-pipeline
+      static_configs:
+        - targets: ["localhost:8000"]
+      scrape_interval: 30s
+      metrics_path: /metrics
+
+# Alerting Configuration
+alerting:
+  enabled: true
+  
+  # Alert Channels
+  channels:
+    email:
+      enabled: true
+      smtp_server: localhost
+      smtp_port: 587
+      from_address: alerts@production-server.local
+      to_addresses:
+        - admin@production-server.local
+        - devops@production-server.local
+    
+    webhook:
+      enabled: true
+      url: http://localhost:9093/webhook
+      timeout: 10  # seconds
+      retry_count: 3
+    
+    slack:
+      enabled: false
+      webhook_url: ${SLACK_WEBHOOK_URL}
+      channel: "#alerts"
+      username: "Reddit Sentiment Bot"
+  
+  # Alert Rules
+  rules:
+    # Service Health Alerts
+    - name: service_down
+      condition: "up == 0"
+      severity: critical
+      for: 5m
+      message: "Reddit Sentiment Pipeline service is down"
+    
+    - name: high_error_rate
+      condition: "rate(errors_total[5m]) > 0.1"
+      severity: warning
+      for: 10m
+      message: "High error rate detected: {{ $value }} errors/sec"
+    
+    # Resource Alerts
+    - name: high_cpu_usage
+      condition: "cpu_usage_percent > 80"
+      severity: warning
+      for: 15m
+      message: "High CPU usage: {{ $value }}%"
+    
+    - name: high_memory_usage
+      condition: "memory_usage_percent > 85"
+      severity: warning
+      for: 10m
+      message: "High memory usage: {{ $value }}%"
+    
+    - name: disk_space_low
+      condition: "disk_usage_percent > 90"
+      severity: critical
+      for: 5m
+      message: "Low disk space: {{ $value }}% used"
+    
+    # Application-specific Alerts
+    - name: reddit_api_failures
+      condition: "rate(reddit_api_errors_total[15m]) > 10"
+      severity: warning
+      for: 5m
+      message: "High Reddit API failure rate"
+    
+    - name: sentiment_analysis_failures
+      condition: "rate(sentiment_analysis_errors_total[15m]) > 5"
+      severity: warning
+      for: 5m
+      message: "High sentiment analysis failure rate"
+    
+    - name: no_data_processed
+      condition: "increase(posts_processed_total[4h]) == 0"
+      severity: warning
+      for: 10m
+      message: "No data processed in the last 4 hours"
+
+# Logging Monitoring
+logging:
+  enabled: true
+  
+  # Log File Monitoring
+  files:
+    - path: /home/cayir/cicd_project/logs/reddit_sentiment_pipeline.log
+      pattern: "ERROR|CRITICAL"
+      alert_threshold: 10  # errors per 15 minutes
+    
+    - path: /home/cayir/cicd_project/logs/reddit_sentiment_errors.log
+      pattern: ".*"
+      alert_threshold: 5   # any errors in error log
+    
+    - path: /var/log/syslog
+      pattern: "reddit-sentiment-pipeline.*ERROR"
+      alert_threshold: 5
+  
+  # Log Rotation Monitoring
+  rotation:
+    enabled: true
+    max_age_days: 30
+    max_size_mb: 100
+    compress: true
+
+# Backup Monitoring
+backup:
+  enabled: true
+  
+  # Backup Status Monitoring
+  status:
+    last_backup_max_age: 86400  # 24 hours in seconds
+    backup_size_threshold: 1024  # minimum backup size in KB
+    verification_required: true
+  
+  # Backup Health Checks
+  health_checks:
+    - type: file_exists
+      path: /home/cayir/cicd_project/backups/latest.tar.gz
+    
+    - type: file_age
+      path: /home/cayir/cicd_project/backups/latest.tar.gz
+      max_age_hours: 25
+    
+    - type: file_size
+      path: /home/cayir/cicd_project/backups/latest.tar.gz
+      min_size_kb: 1024
+
+# Dashboard Configuration
+dashboard:
+  enabled: true
+  
+  # Grafana Integration
+  grafana:
+    enabled: true
+    url: http://localhost:3000
+    api_key: ${GRAFANA_API_KEY}
+    
+    # Dashboard Provisioning
+    dashboards:
+      - name: reddit-sentiment-overview
+        path: /home/yasar/cicd_project/monitoring/health_dashboard.json
+        folder: "Reddit Sentiment Pipeline"
+      
+      - name: system-metrics
+        uid: system-metrics
+        folder: "System Monitoring"
+  
+  # Update Configuration
+  auto_update: true
+  update_interval: 3600  # 1 hour
+
+# Security Monitoring
+security:
+  enabled: true
+  
+  # Access Monitoring
+  access_logs:
+    enabled: true
+    suspicious_patterns:
+      - "4[0-9][0-9]"  # 4xx HTTP errors
+      - "5[0-9][0-9]"  # 5xx HTTP errors
+      - "FAILED"
+      - "UNAUTHORIZED"
+  
+  # File Integrity Monitoring
+  file_integrity:
+    enabled: true
+    monitored_paths:
+      - /home/cayir/cicd_project/apps
+      - /home/cayir/cicd_project/config
+      - /home/cayir/cicd_project/scripts
+    
+    check_interval: 3600  # 1 hour
+    alert_on_change: true

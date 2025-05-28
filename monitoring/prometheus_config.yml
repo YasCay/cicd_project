@@ -1,0 +1,145 @@
+# Prometheus Configuration for Reddit Sentiment Pipeline
+# Production monitoring and metrics collection
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'reddit-sentiment-pipeline'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - "alerting_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Reddit Sentiment Pipeline metrics
+  - job_name: 'reddit-sentiment-pipeline'
+    static_configs:
+      - targets: ['localhost:8000']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scheme: http
+    basic_auth:
+      username: monitoring
+      password: secure_monitoring_password
+    scrape_timeout: 10s
+
+  # System metrics (node_exporter)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+
+  # Health check endpoints
+  - job_name: 'health-checks'
+    static_configs:
+      - targets: ['localhost:8001']
+    scrape_interval: 30s
+    metrics_path: /health
+    scheme: http
+
+  # Application-specific metrics
+  - job_name: 'reddit-api'
+    static_configs:
+      - targets: ['localhost:8000']
+    scrape_interval: 60s
+    metrics_path: /reddit/metrics
+    scheme: http
+
+  - job_name: 'sentiment-analysis'
+    static_configs:
+      - targets: ['localhost:8000']
+    scrape_interval: 60s
+    metrics_path: /sentiment/metrics
+    scheme: http
+
+  - job_name: 'deduplication'
+    static_configs:
+      - targets: ['localhost:8000']
+    scrape_interval: 60s
+    metrics_path: /dedup/metrics
+    scheme: http
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /var/lib/prometheus/data
+    retention.time: 30d
+    retention.size: 10GB
+    wal-compression: true
+
+# Web server configuration
+web:
+  listen-address: 0.0.0.0:9090
+  max-connections: 512
+  read-timeout: 30s
+  external-url: http://localhost:9090
+  console.templates: /etc/prometheus/consoles
+  console.libraries: /etc/prometheus/console_libraries
+  enable-lifecycle: true
+  enable-admin-api: true
+
+# Remote write configuration for long-term storage
+remote_write:
+  - url: http://localhost:9201/api/v1/write
+    remote_timeout: 30s
+    queue_config:
+      capacity: 10000
+      max_shards: 200
+      min_shards: 1
+      max_samples_per_send: 1000
+      batch_send_deadline: 5s
+
+# Remote read configuration
+remote_read:
+  - url: http://localhost:9201/api/v1/read
+    remote_timeout: 1m
+
+# Recording rules for performance optimization
+recording_rules:
+  - name: reddit_sentiment_performance
+    rules:
+      - record: reddit:posts_processed_rate
+        expr: rate(posts_processed_total[5m])
+      
+      - record: reddit:sentiment_analysis_rate
+        expr: rate(sentiment_analyses_total[5m])
+      
+      - record: reddit:api_error_rate
+        expr: rate(reddit_api_errors_total[5m])
+      
+      - record: reddit:duplication_rate
+        expr: rate(duplicates_found_total[5m]) / rate(posts_fetched_total[5m])
+      
+      - record: system:cpu_usage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      
+      - record: system:memory_usage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+      
+      - record: system:disk_usage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100
+
+# Tracing configuration (optional)
+tracing:
+  endpoint: "localhost:14268"
+  insecure: true
+  timeout: 5s
+  headers:
+    trace-format: jaeger

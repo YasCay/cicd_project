@@ -6,6 +6,7 @@
 config/production.env
 config/*.env
 *.env
+.env.backup
 
 # API Keys and Secrets
 secrets/
@@ -19,7 +20,25 @@ keys/
 
 # Reddit API Credentials
 reddit_credentials.txt
-praw.ini
+
+# Development and Testing Artifacts
+test_*.py
+validate_*.py
+debug_*.py
+*_test_*.csv
+*_test_*.db
+test_output.*
+Dockerfile.*
+!Dockerfile
+
+# Cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.coverage
+*.coverage
 
 # GitHub Personal Access Tokens
 github_token.txt

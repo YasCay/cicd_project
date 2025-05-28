@@ -1,3 +1,0 @@
-post_id,title,content,score,created_utc,subreddit,sentiment_label,sentiment_score,run_id
-dummy_1,Bitcoin price rising!,Great news for crypto,150,1640995200,Bitcoin,positive,0.85,20250528_101053
-dummy_2,Ethereum looks bearish,Market looks uncertain,75,1640995260,ethereum,negative,0.72,20250528_101053

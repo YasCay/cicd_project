@@ -1,11 +1,9 @@
-version: '3.8'
 
 services:
   reddit-collector:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     image: reddit-finbert-collector:latest
     container_name: reddit-collector
     environment:

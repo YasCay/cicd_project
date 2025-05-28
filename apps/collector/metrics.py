@@ -8,8 +8,7 @@ Tracks performance, health, and operational metrics for production monitoring.
 
 import logging
 import time
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler
 from typing import Dict, Optional
 
 from prometheus_client import (

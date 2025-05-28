@@ -5,10 +5,8 @@ a BERT model fine-tuned on financial text for accurate financial sentiment class
 """
 
 import logging
-import os
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
-import numpy as np
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 

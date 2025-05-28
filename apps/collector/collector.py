@@ -27,8 +27,6 @@ try:
     from .metrics import get_metrics, MetricsServer
 except ImportError:
     # Fallback for standalone execution
-    import sys
-    from pathlib import Path
     sys.path.append(str(Path(__file__).parent))
     from dedup import PostDeduplicator
     from sentiment import FinBERTSentimentAnalyzer

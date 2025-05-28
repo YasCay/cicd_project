@@ -58,7 +58,9 @@ class TestPipelineMetrics:
     def test_default_registry_initialization(self):
         """Test metrics initialization with default registry."""
         metrics = PipelineMetrics()
-        assert metrics.registry is None  # Uses default registry
+        # Should use the default REGISTRY, not None
+        from prometheus_client import REGISTRY
+        assert metrics.registry is REGISTRY
 
     def test_record_posts_fetched(self):
         """Test recording posts fetched metrics."""
@@ -212,15 +214,16 @@ class TestMetricsServer:
         assert server.metrics is not None
 
     def test_start_server(self):
-        """Test starting the metrics server (placeholder functionality)."""
+        """Test starting the metrics server."""
         registry = CollectorRegistry()
         metrics = PipelineMetrics(registry=registry)
         server = MetricsServer(metrics=metrics)
         
-        # Since we're not implementing a real HTTP server in this step,
-        # just test that the method exists and returns successfully
-        result = server.start_server()
-        assert result is True
+        # Test that the start method exists and can be called
+        # Note: We don't actually start the server in tests to avoid port conflicts
+        assert hasattr(server, 'start')
+        assert callable(server.start)
+        assert server.running is False  # Should not be running initially
 
     def test_get_metrics_response(self):
         """Test getting metrics response for manual serving."""

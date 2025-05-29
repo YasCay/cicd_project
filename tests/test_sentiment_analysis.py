@@ -335,7 +335,7 @@ class TestSentimentIntegration(TestCase):
     def test_collector_sentiment_integration(self, mock_analyzer_class):
         """Test sentiment analysis integration in collector."""
         from apps.collector.collector import RedditSentimentCollector
-        
+
         # Mock analyzer instance
         mock_analyzer = Mock()
         mock_analyzer.analyze_batch.return_value = [

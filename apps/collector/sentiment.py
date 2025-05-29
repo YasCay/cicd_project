@@ -8,7 +8,8 @@ import logging
 from typing import Dict, List, Union
 
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
 
 logger = logging.getLogger(__name__)
 

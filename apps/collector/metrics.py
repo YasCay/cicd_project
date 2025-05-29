@@ -11,16 +11,9 @@ import time
 from http.server import BaseHTTPRequestHandler
 from typing import Dict, Optional
 
-from prometheus_client import (
-    CONTENT_TYPE_LATEST,
-    CollectorRegistry,
-    Counter,
-    Gauge,
-    Histogram,
-    Info,
-    generate_latest,
-    start_http_server,
-)
+from prometheus_client import (CONTENT_TYPE_LATEST, CollectorRegistry, Counter,
+                               Gauge, Histogram, Info, generate_latest,
+                               start_http_server)
 
 logger = logging.getLogger(__name__)
 

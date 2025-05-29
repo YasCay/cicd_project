@@ -10,19 +10,16 @@ Tests coverage:
 - Integration with collector components
 """
 
-import pytest
-import time
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+import time
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from prometheus_client import CollectorRegistry, generate_latest
 
 # Import our modules
-from apps.collector.metrics import (
-    PipelineMetrics,
-    MetricsServer,
-    get_metrics,
-    initialize_metrics,
-)
+from apps.collector.metrics import (MetricsServer, PipelineMetrics,
+                                    get_metrics, initialize_metrics)
 
 
 class TestPipelineMetrics:

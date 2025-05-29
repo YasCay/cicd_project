@@ -23,13 +23,15 @@ RUN mkdir -p /data /app/.cache/huggingface && \
     chown -R collector:collector /app /data
 
 # Install Python dependencies in optimized order
-# 1. Install CPU-only PyTorch first
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    --extra-index-url https://download.pytorch.org/whl/cpu \
-    torch==2.5.1+cpu
+# 1. Update pip and install build tools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 2. Install all other dependencies
+# 2. Install CPU-only PyTorch (stable version)
+RUN pip install --no-cache-dir \
+    torch==2.3.1+cpu torchvision==0.18.1+cpu \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+# 3. Install all other dependencies
 RUN pip install --no-cache-dir \
     pandas==2.2.0 \
     transformers==4.42.0 \

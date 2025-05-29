@@ -108,8 +108,15 @@ class RedditSentimentCollector:
             client_secret = os.getenv("REDDIT_CLIENT_SECRET")
             user_agent = os.getenv("REDDIT_USER_AGENT", "finbert-ci/0.1")
 
-            if not client_id or not client_secret:
-                logger.warning("Reddit credentials not found - using dummy mode")
+            if (
+                not client_id
+                or not client_secret
+                or client_id.startswith("dummy")
+                or client_secret.startswith("dummy")
+            ):
+                logger.warning(
+                    "Reddit credentials not found or dummy - using dummy mode"
+                )
                 return None
 
             reddit = praw.Reddit(

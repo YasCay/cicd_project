@@ -1,7 +1,7 @@
 # Complete Dockerfile for Reddit FinBERT Sentiment Collector
 # Optimized for fast builds with all dependencies
 
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -26,19 +26,19 @@ RUN mkdir -p /data /app/.cache/huggingface && \
 # 1. Install CPU-only PyTorch first
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
-    --index-url https://download.pytorch.org/whl/cpu \
-    torch==2.2.0+cpu
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    torch==2.5.1+cpu
 
 # 2. Install all other dependencies
 RUN pip install --no-cache-dir \
-    pandas==2.1.4 \
-    transformers==4.36.2 \
+    pandas==2.2.0 \
+    transformers==4.42.0 \
     praw==7.7.1 \
     python-dotenv==1.0.0 \
-    prometheus-client==0.19.0 \
+    prometheus-client==0.20.0 \
     psutil>=5.9.0 \
     pybloom-live \
-    numpy==1.26.3
+    numpy==1.26.4
 
 # Copy application code
 COPY apps/ /app/apps/

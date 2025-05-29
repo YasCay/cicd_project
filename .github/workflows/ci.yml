@@ -61,7 +61,7 @@ jobs:
           # Import sorting with isort
           isort --check-only apps/ tests/
 
-      - name: Run tests with coverage
+      - name: Run tests
         env:
           REDDIT_CLIENT_ID: dummy_client_id
           REDDIT_CLIENT_SECRET: dummy_client_secret
@@ -69,12 +69,28 @@ jobs:
           ENABLE_METRICS: true
           METRICS_PORT: 8000
         run: |
-          coverage run -m pytest tests/ -v --tb=short
-          coverage report --show-missing
-          coverage xml
+          # Run tests first to ensure they pass
+          python -m pytest tests/ -v --tb=short
+          
+      - name: Generate coverage report
+        env:
+          REDDIT_CLIENT_ID: dummy_client_id
+          REDDIT_CLIENT_SECRET: dummy_client_secret
+          REDDIT_USER_AGENT: test_agent
+          ENABLE_METRICS: true
+          METRICS_PORT: 8000
+        continue-on-error: true
+        run: |
+          # Generate coverage report with .coveragerc configuration
+          echo "Generating coverage report..."
+          python -m coverage run -m pytest tests/ -q
+          python -m coverage report --show-missing
+          python -m coverage xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        if: always()
+        continue-on-error: true
         with:
           file: ./coverage.xml
           flags: unittests

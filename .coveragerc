@@ -1,0 +1,35 @@
+[run]
+source = apps
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */archive/*
+    */.*
+    */tmp*
+    */_remote_module_*
+    *torch*jit*
+    /tmp/*
+    */site-packages/*
+    */.local/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+
+ignore_errors = True
+skip_covered = False
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

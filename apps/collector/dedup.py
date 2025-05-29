@@ -66,7 +66,7 @@ class PostDeduplicator:
             # Create index on content_hash for faster lookups
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_content_hash 
+                CREATE INDEX IF NOT EXISTS idx_content_hash
                 ON posts(content_hash)
             """
             )
@@ -168,7 +168,7 @@ class PostDeduplicator:
 
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO posts 
+                INSERT OR IGNORE INTO posts
                 (post_id, content_hash, title, subreddit, created_utc, first_seen_utc)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -233,9 +233,9 @@ class PostDeduplicator:
             # Posts by subreddit
             cursor.execute(
                 """
-                SELECT subreddit, COUNT(*) 
-                FROM posts 
-                GROUP BY subreddit 
+                SELECT subreddit, COUNT(*)
+                FROM posts
+                GROUP BY subreddit
                 ORDER BY COUNT(*) DESC
             """
             )

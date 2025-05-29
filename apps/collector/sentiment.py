@@ -1,15 +1,15 @@
 """FinBERT sentiment analysis module for financial text classification.
 
 This module provides sentiment analysis capabilities using FinBERT,
-a BERT model fine-tuned on financial text for accurate financial sentiment classification.
+a BERT model fine-tuned on financial text for accurate financial
+sentiment classification.
 """
 
 import logging
 from typing import Dict, List, Union
 
 import torch
-from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
-                          pipeline)
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +238,8 @@ class FinBERTSentimentAnalyzer:
                     batch_results = self.pipeline(valid_texts)
                 except Exception as e:
                     logger.warning(
-                        f"Batch processing failed, falling back to individual processing: {e}"
+                        "Batch processing failed, falling back to "
+                        f"individual processing: {e}"
                     )
                     # Fallback to individual processing
                     for text in valid_texts:

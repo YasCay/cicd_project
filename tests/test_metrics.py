@@ -18,8 +18,12 @@ import pytest
 from prometheus_client import CollectorRegistry, generate_latest
 
 # Import our modules
-from apps.collector.metrics import (MetricsServer, PipelineMetrics,
-                                    get_metrics, initialize_metrics)
+from apps.collector.metrics import (
+    MetricsServer,
+    PipelineMetrics,
+    get_metrics,
+    initialize_metrics,
+)
 
 
 class TestPipelineMetrics:

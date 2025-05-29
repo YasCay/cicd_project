@@ -145,14 +145,16 @@ class RedditSentimentCollector:
                 self.metrics.record_model_load_time(load_duration)
 
             logger.info(
-                f"FinBERT sentiment analyzer initialized: {model_name} ({load_duration:.2f}s)"
+                f"FinBERT sentiment analyzer initialized: {model_name} "
+                f"({load_duration:.2f}s)"
             )
             return analyzer
         except Exception as e:
             if self.metrics:
                 self.metrics.record_error("sentiment_analyzer", "initialization_failed")
             logger.warning(
-                f"Failed to initialize FinBERT analyzer: {e} - sentiment analysis disabled"
+                f"Failed to initialize FinBERT analyzer: {e} - "
+                f"sentiment analysis disabled"
             )
             return None
 
@@ -309,7 +311,8 @@ class RedditSentimentCollector:
             df["sentiment_score"] = df["sentiment_confidence"]
 
             logger.info(
-                f"Sentiment analysis completed for {len(df)} posts ({analysis_duration:.2f}s)"
+                f"Sentiment analysis completed for {len(df)} posts "
+                f"({analysis_duration:.2f}s)"
             )
 
             # Log sentiment distribution and record metrics

@@ -11,26 +11,26 @@ import os
 import signal
 import sys
 import time
-import psutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
 import praw
+import psutil
 from dotenv import load_dotenv
 
 # Handle imports for both standalone and module execution
 try:
     from .dedup import PostDeduplicator
+    from .metrics import MetricsServer, get_metrics
     from .sentiment import FinBERTSentimentAnalyzer
-    from .metrics import get_metrics, MetricsServer
 except ImportError:
     # Fallback for standalone execution
     sys.path.append(str(Path(__file__).parent))
     from dedup import PostDeduplicator
+    from metrics import MetricsServer, get_metrics
     from sentiment import FinBERTSentimentAnalyzer
-    from metrics import get_metrics, MetricsServer
 
 # Load environment variables
 load_dotenv()

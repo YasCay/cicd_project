@@ -4,16 +4,17 @@ Alert Webhook Handler for Reddit Sentiment Pipeline
 Handles incoming alerts from Prometheus/Alertmanager and creates GitHub issues
 """
 
-import os
-import sys
+import hashlib
 import json
 import logging
-import requests
-import hashlib
+import os
+import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Any
 from pathlib import Path
-from flask import Flask, request, jsonify
+from typing import Any, Dict, List, Optional
+
+import requests
+from flask import Flask, jsonify, request
 
 # Configure logging
 logging.basicConfig(

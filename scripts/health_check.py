@@ -17,18 +17,19 @@ Author: GitHub Copilot
 Date: 2024
 """
 
-import sys
+import argparse
 import json
-import time
-import psutil
+import logging
 import sqlite3
 import subprocess
-import logging
-import requests
+import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Tuple
-import argparse
+
+import psutil
+import requests
 
 
 class HealthCheckMonitor:

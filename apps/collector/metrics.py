@@ -12,13 +12,13 @@ from http.server import BaseHTTPRequestHandler
 from typing import Dict, Optional
 
 from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
     Counter,
     Gauge,
     Histogram,
     Info,
     generate_latest,
-    CollectorRegistry,
-    CONTENT_TYPE_LATEST,
     start_http_server,
 )
 

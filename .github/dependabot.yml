@@ -7,11 +7,9 @@ updates:
     directory: "/apps/collector"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "dependabot"
-    assignees:
-      - "dependabot"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
       include: "scope"
@@ -21,11 +19,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+      day: "monday"
+      time: "10:00"
+    open-pull-requests-limit: 3
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+      day: "monday"
+      time: "11:00"
+    open-pull-requests-limit: 3

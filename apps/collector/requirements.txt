@@ -14,7 +14,7 @@ pytest>=9.0.3
 pytest-cov>=7.1.0
 
 # Code quality
-ruff>=0.15.13
+ruff>=0.15.14
 black>=26.5.0
 isort>=8.0.1
 

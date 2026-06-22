@@ -10,7 +10,7 @@ transformers==5.12.1
 numpy>=2.5.0
 
 # Testing
-pytest>=9.1.0
+pytest>=9.1.1
 pytest-cov>=7.1.0
 
 # Code quality

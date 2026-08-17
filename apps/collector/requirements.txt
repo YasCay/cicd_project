@@ -7,7 +7,7 @@ pybloom-live>=4.0.0
 # FinBERT sentiment analysis 
 # Note: torch is installed separately with CPU-only version in Docker/CI
 transformers==5.14.1
-numpy>=2.5.1
+numpy>=2.5.2
 
 # Testing
 pytest>=9.1.1

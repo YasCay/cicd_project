@@ -1,7 +1,7 @@
 # Core dependencies
 pandas>=3.0.5
 python-dotenv>=1.2.2
-praw>=8.0.2
+praw>=8.0.3
 pybloom-live>=4.0.0
 
 # FinBERT sentiment analysis 

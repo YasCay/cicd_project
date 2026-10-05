@@ -16,7 +16,7 @@ pytest-cov>=7.1.0
 # Code quality
 ruff>=0.16.10
 black>=26.5.1
-isort>=9.0.1
+isort>=9.0.2
 
 # Monitoring and metrics
 prometheus-client>=0.25.0

@@ -1,7 +1,7 @@
 # Complete Dockerfile for Reddit FinBERT Sentiment Collector
 # Optimized for fast builds with all dependencies
 
-FROM python:3.15.0rc3-slim
+FROM python:3.16.0a1-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
